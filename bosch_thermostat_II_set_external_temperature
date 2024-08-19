@@ -1,0 +1,189 @@
+alias: "Thermostate: Update external temperature"
+description: ""
+trigger:
+  - platform: state
+    entity_id:
+      - sensor.thermometer_eg_flur_temperature
+    id: BOSCH
+  - platform: state
+    entity_id:
+      - sensor.thermometer_eg_kuche_temperature
+    id: BOSCH
+  - platform: state
+    entity_id:
+      - sensor.thermometer_eg_wohnzimmer_temperature
+    id: BOSCH
+  - platform: state
+    entity_id:
+      - sensor.thermometer_eg_toilette_temperature
+    id: BOSCH
+  - platform: state
+    entity_id:
+      - sensor.thermometer_eg_bad_temperature
+    id: BOSCH
+  - platform: state
+    entity_id:
+      - sensor.thermometer_og_buro_temperature
+    id: BOSCH
+  - platform: state
+    entity_id:
+      - sensor.thermometer_og_toilette_temperature
+    id: BOSCH
+  - platform: state
+    entity_id:
+      - sensor.thermometer_dg_wohnzimmer_temperature
+    id: DG - Wohnzimmer
+  - platform: state
+    entity_id:
+      - sensor.thermometer_dg_bad_temperature
+    id: BOSCH
+  - platform: time_pattern
+    minutes: /29
+    id: TIMER
+condition: []
+action:
+  - alias: Set external temperature for BOSCH thermostats every 30 min.
+    if:
+      - condition: trigger
+        id:
+          - TIMER
+    then:
+      - data:
+          topic: zigbee2mqtt/Thermostat - EG - Flur/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_eg_flur_temperature') | float(0) | round(1) }} 
+            }      
+        enabled: true
+        action: mqtt.publish
+      - data:
+          topic: zigbee2mqtt/Thermostat - EG - Küche/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_eg_kuche_temperature') | float(0) | round(1) }} 
+            }      
+        enabled: true
+        action: mqtt.publish
+      - data:
+          topic: zigbee2mqtt/Thermostat - EG - Wohnzimmer/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_eg_wohnzimmer_temperature') | float(0) | round(1) }} 
+            }      
+        enabled: true
+        action: mqtt.publish
+      - data:
+          topic: zigbee2mqtt/Thermostat - EG - Toilette/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_eg_toilette_temperature') | float(0) | round(1) }} 
+            }      
+        enabled: true
+        action: mqtt.publish
+      - data:
+          topic: zigbee2mqtt/Thermostat - OG - Büro/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_og_buro_temperature') | float(0) | round(1) }} 
+            }      
+        enabled: true
+        action: mqtt.publish
+      - data:
+          topic: zigbee2mqtt/Thermostat - OG - Toilette/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_og_toilette_temperature') | float(0) | round(1) }} 
+            }   
+        action: mqtt.publish
+      - data:
+          topic: zigbee2mqtt/Thermostat - DG - Wohnzimmer - Truhe/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_dg_wohnzimmer_temperature') | float(0) | round(1) }} 
+            }   
+        action: mqtt.publish
+      - data:
+          topic: zigbee2mqtt/Thermostat - DG - Wohnzimmer - TV/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_dg_wohnzimmer_temperature') | float(0) | round(1) }} 
+            } 
+        action: mqtt.publish
+      - data:
+          topic: zigbee2mqtt/Thermostat - DG - Bad/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states('sensor.thermometer_dg_bad_temperature') | float(0) | round(1) }} 
+            }          
+        enabled: true
+        action: mqtt.publish
+  - alias: Set external temperature on temperature change
+    if:
+      - condition: trigger
+        id:
+          - BOSCH
+    then:
+      - data:
+          topic: >-
+            zigbee2mqtt/{{ state_attr(trigger.entity_id, "friendly_name") |
+            regex_replace(find='Thermometer', replace='Thermostat',
+            ignorecase=True) | regex_replace(find=' Temperature', replace='',
+            ignorecase=True) }}/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states(trigger.entity_id) | float(0) | round(1) }} 
+            }      
+        enabled: true
+        action: mqtt.publish
+      - data:
+          topic: >-
+            zigbee2mqtt/{{ state_attr(trigger.entity_id, "friendly_name") |
+            regex_replace(find='Thermometer', replace='Thermostat',
+            ignorecase=True) | regex_replace(find=' Temperature', replace='',
+            ignorecase=True) }}/set/
+          payload_template: |
+            { 
+              "local_temperature_calibration": {{ (
+                  states(trigger.entity_id) | float(16.0) - 
+                    state_attr(trigger.entity_id | 
+                      regex_replace(find='Thermometer', replace='thermostat', ignorecase=True) | 
+                      regex_replace(find='_temperature', replace='', ignorecase=True) | 
+                      regex_replace(find='sensor', replace='climate', ignorecase=True), 
+                  'current_temperature') | float(0)
+              ) | round(1) }}
+            }
+        enabled: false
+        action: mqtt.publish
+    else: []
+  - if:
+      - condition: trigger
+        id:
+          - DG - Wohnzimmer
+    then:
+      - data:
+          topic: >-
+            zigbee2mqtt/{{ state_attr(trigger.entity_id, "friendly_name") |
+            regex_replace(find='Thermometer', replace='Thermostat',
+            ignorecase=True) | regex_replace(find=' Temperature', replace=' -
+            TV', ignorecase=True) }}/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states(trigger.entity_id) | float(0) | round(1) }} 
+            }      
+        enabled: true
+        action: mqtt.publish
+      - data:
+          topic: >-
+            zigbee2mqtt/{{ state_attr(trigger.entity_id, "friendly_name") |
+            regex_replace(find='Thermometer', replace='Thermostat',
+            ignorecase=True) | regex_replace(find=' Temperature', replace=' -
+            Truhe', ignorecase=True) }}/set/
+          payload_template: |
+            { 
+              "remote_temperature": {{ states(trigger.entity_id) | float(0) | round(1) }} 
+            }      
+        enabled: true
+        action: mqtt.publish
+    else: []
+    alias: Set external temperature DG Wohnzimmer (2 radiators)
+mode: queued
