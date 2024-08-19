@@ -1,0 +1,168 @@
+alias: "Thermostate: Fenster zu"
+description: ""
+trigger:
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_eg_kuche_hof_contact
+    to: "off"
+    id: EG - Wohnbereich
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_eg_kuche_garten_contact
+    to: "off"
+    id: EG - Wohnbereich
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_eg_esszimmer_garten_contact
+    to: "off"
+    id: EG - Wohnbereich
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_eg_esszimmer_terrasse_contact
+    to: "off"
+    id: EG - Wohnbereich
+  - platform: state
+    entity_id:
+      - binary_sensor.tur_eg_wohnzimmer_contact
+    to: "off"
+    id: EG - Wohnbereich
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_eg_toilette_contact
+    to: "off"
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_eg_bad_contact
+    to: "off"
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_og_buro_hof_contact
+    to: "off"
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_og_buro_garten_contact
+    to: "off"
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_og_schlafzimmer_garten_contact
+    to: "off"
+    enabled: false
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_og_schlafzimmer_terrasse_contact
+    to: "off"
+    enabled: false
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_og_gastezimmer_contact
+    to: "off"
+    enabled: false
+  - platform: state
+    entity_id:
+      - binary_sensor.tur_og_gastezimmer_contact
+    to: "off"
+    enabled: false
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_og_toilette_contact
+    to: "off"
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_og_bad_contact
+    to: "off"
+    enabled: false
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_dg_flur_contact
+    to: "off"
+    enabled: false
+  - platform: state
+    entity_id:
+      - binary_sensor.tur_dg_wohnzimmer_contact
+    to: "off"
+    id: DG - Wohnzimmer
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_dg_schlafzimmer_contact
+    to: "off"
+    id: DG - Schlafzimmer
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_dg_kuche_contact
+    to: "off"
+    enabled: false
+  - platform: state
+    entity_id:
+      - binary_sensor.fenster_dg_bad_contact
+    to: "off"
+condition: []
+action:
+  - alias: "DG - Wohnzimmer: Thermostate an"
+    if:
+      - condition: trigger
+        id:
+          - DG - Wohnzimmer
+    then:
+      - device_id: ""
+        domain: ""
+        entity_id: ""
+      - device_id: ""
+        domain: ""
+        entity_id: ""
+  - alias: DG - Schlafzimmer
+    if:
+      - condition: trigger
+        id:
+          - DG - Schlafzimmer
+    then:
+      - device_id: 5924670f4b3b6f23fa394fe4cc1e7f90
+        domain: climate
+        entity_id: 5428e575884d2a0faa2208b744356f50
+        type: set_hvac_mode
+        hvac_mode: heat
+        enabled: true
+    enabled: false
+  - alias: "EG - Wohnbereich: Thermostate an"
+    if:
+      - condition: trigger
+        id:
+          - EG - Wohnbereich
+    then:
+      - device_id: ""
+        domain: ""
+        entity_id: ""
+      - device_id: ""
+        domain: ""
+        entity_id: ""
+      - device_id: 0b39638d8e8eac6dda7f57ffb563b43b
+        domain: climate
+        entity_id: 3fa19b64cfcf5866395c9cbcef77b273
+        type: set_hvac_mode
+        hvac_mode: heat
+        enabled: false
+  - alias: Thermostate an
+    if:
+      - condition: not
+        conditions:
+          - condition: trigger
+            id:
+              - EG - Wohnbereich
+              - DG - Wohnzimmer
+              - DG - Schlafzimmer
+    then:
+      - data:
+          topic: >-
+            zigbee2mqtt/{{ state_attr(trigger.entity_id, "friendly_name") |
+            regex_replace(find='Fenster', replace='Thermostat', ignorecase=True)
+            | regex_replace(find='Tür', replace='Thermostat', ignorecase=True) |
+            regex_replace(find=' Door', replace='', ignorecase=True) |
+            regex_replace(find=' - Hof', replace='', ignorecase=True) |
+            regex_replace(find=' - Garten', replace='', ignorecase=True) |
+            regex_replace(find=' - Terrasse', replace='', ignorecase=True)
+            }}/set/
+          payload_template: |
+            { 
+              "window_open": "OFF"
+            }        
+        action: mqtt.publish
+mode: single
